@@ -1,0 +1,196 @@
+{
+  "name": "Mowakkid AI - Error logger",
+  "nodes": [
+    {
+      "name": "Automatic execution error",
+      "id": "35bf7aba1e402b45d68be3a5c36d0c31",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {},
+      "notes": "Node version 1; check fields if n8n offers an upgrade."
+    },
+    {
+      "name": "Build redacted error row",
+      "id": "384f2f834996100732df6d694ef7886a",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const e = $input.first().json;\nreturn [{ json: { timestamp: new Date().toISOString(), workflow: String(e.workflow?.name ?? 'Mowakkid AI').slice(0,160), execution_id: String(e.execution?.id ?? ''), node: String(e.execution?.lastNodeExecuted ?? e.trigger?.error?.node?.name ?? 'activation'), error_code: String(e.execution?.error?.name ?? e.trigger?.error?.name ?? 'ExecutionError').slice(0,80), message_id: '', message: 'Execution failed. Open the execution in n8n to investigate; raw errors/payloads are intentionally not copied.' } }];"
+      },
+      "notes": "Node version 2; check fields if n8n offers an upgrade."
+    },
+    {
+      "name": "Append error to Errors sheet",
+      "id": "485ad7e82cbe5e4fb4b315969db11daa",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        520,
+        180
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Errors",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "workflow": "={{ $json.workflow }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "node": "={{ $json.node }}",
+            "error_code": "={{ $json.error_code }}",
+            "message_id": "={{ $json.message_id }}",
+            "message": "={{ $json.message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "node",
+              "displayName": "node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_code",
+              "displayName": "error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "useAppend": true
+        }
+      },
+      "notes": "Node version 4.6; check fields if n8n offers an upgrade.",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": null,
+          "name": "Mowakkid Google Sheets"
+        }
+      }
+    },
+    {
+      "name": "Error logger instructions",
+      "id": "ab351426b8d5339ae92e287f4f63d425",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -30,
+        -110
+      ],
+      "parameters": {
+        "content": "## Import this separately\nSelect this workflow under the MAIN workflow Settings → Error Workflow after saving both. Error Trigger handles failed automatic executions; manual tests do not invoke it.\nAuthorize Google Sheets. If Sheets itself is unavailable, inspect n8n executions: this logger cannot write to an unavailable service. Do not set this logger as its own error workflow.",
+        "width": 820,
+        "height": 240,
+        "color": 3
+      },
+      "notes": "Node version 1; check fields if n8n offers an upgrade."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Automatic execution error": {
+      "main": [
+        [
+          {
+            "node": "Build redacted error row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build redacted error row": {
+      "main": [
+        [
+          {
+            "node": "Append error to Errors sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Baghdad",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": []
+}
